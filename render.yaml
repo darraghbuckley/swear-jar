@@ -6,3 +6,8 @@ services:
     startCommand: 'cd api && bundle exec ruby server.rb'
     envVars:
       - fromGroup: 'swear-jar'
+envVarGroups:
+- name: 'swear-jar'
+  envVars:
+  - key: 'BANK_API_KEY'
+    sync: false
