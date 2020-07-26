@@ -1,0 +1,8 @@
+services:
+  - type: 'web'
+    name: 'swear-jar'
+    env: 'ruby'
+    buildCommand: 'cd api && bundle install --without test'
+    startCommand: 'cd api && bundle exec ruby server.rb'
+    envVars:
+      - fromGroup: 'swear-jar'
