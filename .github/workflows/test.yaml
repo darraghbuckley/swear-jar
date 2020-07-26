@@ -15,7 +15,7 @@ jobs:
       - name: 'Checkout'
         run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
-          git checkout master
+          git checkout main
           git checkout -
       - name: 'Set up Ruby 2.6.3'
         uses: ruby/setup-ruby@v1
