@@ -42,7 +42,7 @@ describe SwearJar do
       expect_any_instance_of(RestClient::Request).to receive(:execute)
         .and_return(response_stub)
       response = post '/jar'
-      expect(response.status).to eq(302)
+      expect(response.status).to eq(200)
     end
   end
 
