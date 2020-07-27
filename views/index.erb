@@ -113,8 +113,7 @@
     </div>
     <script>
       function createSwearJar() {
-        fetch('/jar', { method: 'POST' })
-        console.log('creating!')
+        fetch('/jar', { method: 'POST' }).then(location.reload())
       }
     </script>
     <script

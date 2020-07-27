@@ -97,7 +97,8 @@ class SwearJar < Sinatra::Application
   post '/jar' do
     entity_id = session.dig(:accounts, 0, :entity_id)
     bank.account!(entity_id: entity_id, name: SWEAR_JAR_NAME)
-    redirect '/'
+    content_type :json
+    halt 200
   end
 
   post '/jar/swear' do
