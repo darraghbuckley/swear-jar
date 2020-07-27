@@ -3,7 +3,7 @@ services:
     name: 'swear-jar'
     env: 'ruby'
     buildCommand: 'bundle install --without test'
-    startCommand: 'bundle exec ruby server.rb'
+    startCommand: 'bundle exec ruby swear_jar.rb'
     envVars:
       - fromGroup: 'swear-jar'
 envVarGroups:
