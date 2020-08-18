@@ -19,95 +19,126 @@
     <div class='modal in' tabindex='-1' role='dialog' style='display: block;'>
       <div class='modal-dialog'>
         <div class='modal-content'>
-          <form action='/jar/swear' method='post'>
-            <div class='modal-header'>
-              <h5 class='modal-title'>Swear jar</h5>
-            </div>
-            <div class='modal-body'>
-              <ul class='list-group'>
-                <li class='list-group-item'>
-                  <div class='media'>
-                    <div class='media-body'>Bank acount</div>
-                    <div class='media-body'>
-                      <select class='custom-select' name='account_id'>
-                      <% session[:accounts].each_with_index do |account, index| %>
-                        <option
-                          value='<%= account[:id] %>'
-                          <%= 'selected' if session[:account_id] == account[:id]%>
-                        >
-                          <%= account[:name] %>
-                          (<%=
-                            format(
-                              '%<value>.2f', 
-                              value: account[:balance] / 100.0)
-                          %>)
-                        </option>
-                      <% end %>
-                      </select>
-                    </div>
-                  </div>
-                </li>
-                <%
-                  if session[:swear_jar]
-                %>
-                  <li class='list-group-item'>
-                    <div class='media'>
-                      <div class='media-body'>Swear jar</div>
-                      <div class='media-body'>
-                        <%= session.dig(:swear_jar, :name) %>
-                        (<%=
-                        format(
-                          '%<value>.2f',
-                          value: session.dig(:swear_jar, :balance) / 100.0)
-                        %>)
+          <% if session[:show_api_key_flash] %>
+            <p>
+              To use the swear jar, you'll need to add your <a href=''>API key</a> as an environment variable <code>BANK_API_KEY</code> to <a href=''>Render</a>.
+            </p>
+          <% else %>
+            <form action='/jar/swear' method='post'>
+              <div class='modal-header'>
+                <h5 class='modal-title'>Swear jar</h5>
+              </div>
+              <div class='modal-body'>
+                <ul class='list-group'>
+                  <% if session[:accounts] %>
+                    <li class='list-group-item'>
+                      <div class='align-items-center media'>
+                        <div class='media-body'>
+                          Bank acount
+                          <svg
+                            class='bi bi-info-circle-fill'
+                            data-toggle='tooltip'
+                            fill='currentColor'
+                            height='1em'
+                            title='You can hide your accounts (and balances) by adding a BANK_ACCOUNT_ID environment variable.'
+                            viewBox='0 0 16 16'                            
+                            width='1em'                            
+                            xmlns='http://www.w3.org/2000/svg'
+                          >
+                            <path
+                              d='M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM8 5.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z'
+                              fill-rule='evenodd'                               
+                            />
+                          </svg>
+                        </div>
+                        <div class='media-body'>
+                          <select class='custom-select' name='account_id'>
+                          <% session[:accounts].each_with_index do |account, index| %>
+                            <option
+                              value='<%= account[:id] %>'
+                              <%= 'selected' if session[:account_id] == account[:id]%>
+                            >
+                              <%= account[:name] %>
+                              (<%=
+                                format(
+                                  '%<value>.2f', 
+                                  value: account[:balance] / 100.0)
+                              %>)
+                            </option>
+                          <% end %>
+                          </select>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                <%                               
-                  end
-                %>
-              </ul>
-              <% if session[:show_confirmation_flash] %>
-                <div
-                  class='alert alert-warning alert-dismissible mt-3'
-                  role='alert'
-                >
-                  Fined!
-                  <button
-                    aria-label='Close'
-                    class='close'
-                    data-dismiss='alert'
-                    type='button'                    
+                    </li>                              
+                  <% else %>
+                    <input
+                      id='account_id'
+                      type='hidden'
+                      value='<%= session[:account]&.dig(:id)%>'
+                    />
+                  <% end %>
+                  <%
+                    if session[:swear_jar]
+                  %>
+                    <li class='list-group-item'>
+                      <div class='media'>
+                        <div class='media-body'>Swear jar</div>
+                        <div class='media-body'>
+                          <%= session.dig(:swear_jar, :name) %>
+                          (<%=
+                          format(
+                            '%<value>.2f',
+                            value: session.dig(:swear_jar, :balance) / 100.0)
+                          %>)
+                        </div>
+                      </div>
+                    </li>
+                  <%                               
+                    end
+                  %>
+                </ul>
+                <% if session[:show_confirmation_flash] %>
+                  <div
+                    class='alert alert-warning alert-dismissible mt-3'
+                    role='alert'
                   >
-                    <span aria-hidden='true'>&times;</span>
-                  </button>
-                </div>
-              <% end %>
-            </div>
-            <div class='modal-footer'>
-              <% if session[:swear_jar] %>
-                <button type='submit' class='btn btn-primary'>
-                  I swore...
-                </button>
-              <% else %>
-                <div class='alert alert-warning' role='alert'>
-                  <div>
-                    It looks like you don't have a swear jar yet. Would
-                    you like to create one?
+                    Fined!
+                    <button
+                      aria-label='Close'
+                      class='close'
+                      data-dismiss='alert'
+                      type='button'                    
+                    >
+                      <span aria-hidden='true'>&times;</span>
+                    </button>
                   </div>
-                  <hr />
-                  <button
-                    aria-label='Yes'
-                    class='btn btn-block btn-warning'
-                    onclick='createSwearJar()'
-                    type='button'
-                  >
-                    Yes!
+                <% end %>
+              </div>
+              <div class='modal-footer'>
+                <% if session[:swear_jar] %>
+                  <button type='submit' class='btn btn-primary'>
+                    I swore...
                   </button>
-                </div>
-              <% end %>
-            </div>
-          </form>          
+                <% else %>
+                  <div class='alert alert-warning' role='alert'>
+                    <div>
+                      It looks like you don't have a swear jar yet. Would
+                      you like to create one?
+                    </div>
+                    <hr />
+                    <button
+                      aria-label='Yes'
+                      class='btn btn-block btn-warning'
+                      onclick='createSwearJar()'
+                      type='button'
+                    >
+                      Yes!
+                    </button>
+                  </div>
+                <% end %>
+              </div>
+            </form> 
+          <% end %>         
         </div>
       </div>
     </div>
@@ -132,5 +163,8 @@
       integrity='sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI'
       src='https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js'
     ></script>
+    <script>
+      $(function () { $('[data-toggle="tooltip"]').tooltip() })
+    </script>        
   </body>
 </html>
