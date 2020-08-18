@@ -3,6 +3,8 @@ require 'sinatra/base'
 
 class SwearJar < Sinatra::Application
   class Bank
+    class Exception < RuntimeError; end
+
     BASE_URL = 'https://api.bnk.dev'.freeze
 
     def headers
@@ -21,6 +23,7 @@ class SwearJar < Sinatra::Application
       JSON.parse(response.body, symbolize_names: true)
     rescue RestClient::ExceptionWithResponse => e
       puts e.response.body
+      raise Exception
     end
 
     def accounts
@@ -29,17 +32,14 @@ class SwearJar < Sinatra::Application
         method: :get,
         url: "#{BASE_URL}/accounts",
       )
-      execute_request_and_parse_response(request)
+      execute_request_and_parse_response(request).dig(:data)
     end
 
-    def account!(entity_id:, name:)
+    def account!(name:)
       request = RestClient::Request.new(
         headers: headers,
         method: :post,
-        payload: {
-          entity_id: entity_id,
-          name: name,
-        }.to_json,
+        payload: { name: name }.to_json,
         url: "#{BASE_URL}/accounts",
       )
       execute_request_and_parse_response(request)
@@ -70,21 +70,45 @@ class SwearJar < Sinatra::Application
 
   enable :sessions
 
-  helpers do
+  helpers do # rubocop:disable Metrics/BlockLength
     def bank
       @bank ||= Bank.new
     end
 
+    def bank_account_id
+      @bank_account_id ||= ENV['BANK_ACCOUNT_ID']
+    end
+
+    def bank_api_key
+      @bank_api_key ||= ENV['BANK_API_KEY']
+    end
+
     def populate_session
-      accounts = bank.accounts.map do |account|
-        account.slice(:id, :name, :balance)
+      session_data_to_carry_forward = {
+        show_confirmation_flash: session[:show_confirmation_flash],
+      }
+      session.clear
+      session.merge!(session_data_to_carry_forward)
+
+      if bank_api_key
+        populate_account_data
+      else
+        session[:show_api_key_flash] = true
+      end
+    end
+
+    def populate_account_data
+      accounts =
+        bank.accounts.map { |account| account.slice(:id, :name, :balance) }
+
+      bank_account = accounts.find { |account| account[:id] == bank_account_id }
+      if bank_account
+        session[:account] = bank_account
+      else
+        session[:accounts] = accounts
       end
 
-      swear_jar = accounts.find do |account|
-        account[:name] == SWEAR_JAR_NAME
-      end
-
-      session[:accounts] = accounts
+      swear_jar = accounts.find { |account| account[:name] == SWEAR_JAR_NAME }
       session[:swear_jar] = swear_jar
     end
   end
@@ -95,21 +119,21 @@ class SwearJar < Sinatra::Application
   end
 
   post '/jar' do
-    entity_id = session.dig(:accounts, 0, :entity_id)
-    bank.account!(entity_id: entity_id, name: SWEAR_JAR_NAME)
+    bank.account!(name: SWEAR_JAR_NAME)
     redirect '/'
   end
 
   post '/jar/swear' do
-    account_id = @params[:account_id]
+    session[:show_confirmation_flash] = false
     bank.transfer!(
-      account_id: account_id,
+      account_id: bank_account_id || @params[:account_id],
       amount: FINE_AMOUNT,
       description: DESCRIPTION,
       swear_jar_id: session[:swear_jar]&.dig(:id),
     )
-    session[:account_id] = account_id
     session[:show_confirmation_flash] = true
+    redirect '/'
+  rescue Bank::Exception
     redirect '/'
   end
 end

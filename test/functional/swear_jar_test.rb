@@ -8,12 +8,17 @@ describe SwearJar do
   end
 
   describe '/' do
+    before(:each) do
+      expect_any_instance_of(app).to receive(:bank_api_key)
+        .and_return('api_key')
+    end
+
     it 'accepts a request' do
       response_stub = instance_double(
         RestClient::Response,
-        body: [
-          { id: 'account0', name: 'Account', balance: 101 },
-        ].to_json,
+        body: {
+          data: [{ id: 'account0', name: 'Account', balance: 101 }],
+        }.to_json,
       )
       expect_any_instance_of(RestClient::Request).to receive(:execute)
         .and_return(response_stub)
